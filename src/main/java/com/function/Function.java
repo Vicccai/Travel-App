@@ -18,10 +18,10 @@ import java.util.Optional;
  */
 public class Function {
     /**
-     * This function listens at endpoint "/api/HttpExample". Two ways to invoke it
+     * This function listens at endpoint "/api/queryflights". Two ways to invoke it
      * using "curl" command in bash:
-     * 1. curl -d "HTTP Body" {your host}/api/HttpExample
-     * 2. curl "{your host}/api/HttpExample?name=HTTP%20Query"
+     * 1. curl -d "HTTP Body" {your host}/api/queryflights
+     * 2. curl "{your host}/api/queryflights?name=HTTP%20Query"
      */
     @FunctionName("QueryFlights")
     public HttpResponseMessage run(
@@ -73,14 +73,5 @@ public class Function {
         } catch (Exception e) {
             return request.createResponseBuilder(HttpStatus.BAD_REQUEST).body("Invalid parameters").build();
         }
-
-        // if (name == null) {
-        // return request.createResponseBuilder(HttpStatus.BAD_REQUEST)
-        // .body("Please pass a name on the query string or in the request
-        // body").build();
-        // } else {
-        // return
-        // request.createResponseBuilder(HttpStatus.OK).body(result.toString()).build();
-        // }
     }
 }
