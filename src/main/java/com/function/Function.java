@@ -10,7 +10,6 @@ import com.microsoft.azure.functions.annotation.AuthorizationLevel;
 import com.microsoft.azure.functions.annotation.FunctionName;
 import com.microsoft.azure.functions.annotation.HttpTrigger;
 
-import java.io.IOException;
 import java.util.Optional;
 
 /**
@@ -67,7 +66,9 @@ public class Function {
                 return request.createResponseBuilder(HttpStatus.OK).body(arr.toString(3)).build();
             } else {
                 JSONObject cheapest = FlightService.findCheapest(result);
-                return request.createResponseBuilder(HttpStatus.OK).body(cheapest.toString(3)).build();
+                JSONArray arr = new JSONArray();
+                arr.put(cheapest);
+                return request.createResponseBuilder(HttpStatus.OK).body(arr.toString(3)).build();
             }
 
         } catch (Exception e) {

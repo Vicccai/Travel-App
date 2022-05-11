@@ -13,6 +13,7 @@ public class FlightService implements Runnable {
   static String[] major = { "MEX", "HND", "CDG", "BCN", "FCO", "LGA", "LHR", "SYD", "YYZ", "BER" };
   static String[] hiking = { "FAT", "FCA", "SLC", "LAS", "PHX", "JAC", "YYC", "RNO", "CHO",
       "SFO" };
+  static String[] skiing = { "YVR", "GVA", "DEN", "BTV", "SLC", "ZRH", "VCE", "CTS", "INN", "JAC" };
   private int index;
   private String depart;
   private String arrive;
@@ -53,6 +54,8 @@ public class FlightService implements Runnable {
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
+    } catch (Exception e) {
+      e.printStackTrace();
     }
 
   }
@@ -70,21 +73,42 @@ public class FlightService implements Runnable {
    */
   public JSONObject lookupFlights(String departureAirport, String arrivalAirport,
       String departureDate, String returnDate, int numTravelers)
-      throws JSONException, IOException {
-    String url = "https://www.expedia.com/api/flight/search?departureDate=" +
-        departureDate + "&returnDate=" + returnDate + "&departureAirport=" +
-        departureAirport + "&arrivalAirport=" + arrivalAirport +
-        "&numberOfAdultTravelers=" + Integer.toString(numTravelers) + "&maxOfferCount=1";
-    // read json at url
-    ReadJson reader = new ReadJson();
-    JSONObject json = reader.readJsonFromUrl(url);
-    JSONObject flight;
-    try {
-      flight = getFlights(json);
-    } catch (JSONException e) {
-      return null;
+      throws JSONException, IOException, Exception {
+    // check if flight is in the database
+    CosmosHandler handler = new CosmosHandler();
+    String id = generateFlightId(departureAirport, arrivalAirport, departureDate, returnDate, numTravelers);
+    JSONObject flight = handler.getFlightById(id);
+    // if flight is not in database
+    if (flight == null) {
+      String url = "https://www.expedia.com/api/flight/search?departureDate=" +
+          departureDate + "&returnDate=" + returnDate + "&departureAirport=" +
+          departureAirport + "&arrivalAirport=" + arrivalAirport +
+          "&numberOfAdultTravelers=" + Integer.toString(numTravelers) + "&maxOfferCount=1";
+      // read json at url
+      ReadJson reader = new ReadJson();
+      JSONObject json = reader.readJsonFromUrl(url);
+      try {
+        flight = getFlights(json);
+        // put flight in database
+        if (flight != null) {
+          try {
+            handler.createItem(id, flight);
+          } catch (Exception e) {
+            handler.replaceItem(id, flight);
+          }
+        }
+      } catch (JSONException e) {
+        return null;
+      }
     }
     return flight;
+  }
+
+  private String generateFlightId(String departureAirport, String arrivalAirport,
+      String departureDate, String returnDate, int numTravelers) {
+    String id = departureAirport + "&" + arrivalAirport + "&" + departureAirport + "&" + returnDate + "&"
+        + numTravelers;
+    return id;
   }
 
   public static JSONObject findCheapest(JSONObject[] flights) {
@@ -111,6 +135,8 @@ public class FlightService implements Runnable {
         return major;
       case "hiking":
         return hiking;
+      case "skiing":
+        return skiing;
       default:
         return null;
     }
@@ -194,7 +220,7 @@ public class FlightService implements Runnable {
    * @exclude is in the form of [ABC,DEF]
    */
   public static String[] parseExclude(String exclude) {
-    String airports = exclude.substring(1, exclude.length() - 1);
+    String airports = exclude.replaceAll("\\[", "").replaceAll("\\]", "");
     return airports.split(",");
   }
 
