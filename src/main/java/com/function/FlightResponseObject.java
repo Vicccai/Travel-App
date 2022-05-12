@@ -1,7 +1,5 @@
 package com.function;
 
-import org.json.JSONObject;
-
 public class FlightResponseObject {
   private String id;
   private String time;
